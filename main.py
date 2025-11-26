@@ -67,18 +67,14 @@ Overall, the team handled the situation well, but the incident highlights the ne
 	print("Updated basic counts after stop words removal (regex) --->")
 	regex_text = " ".join(regex_tokens)
 	num_chars, num_words, num_sent = basic_counts(regex_text)
-	print("Number of characters: ", num_chars)
-	print("Number of words: ", num_words)
-	print("Number of sentences: ", num_sent)
+	print("Number of content tokens(non-stopwords): ", num_words)
 	
 	print("Updated word statistics after stop words removal (regex) --->")
 	k = int(input("Enter your k value: "))
 	k_words = top_k_words(regex_text, k)
-	print("Top K most frequent words: ", k_words)
+	print("Top-k content words: ", k_words)
 	longest_word, shortest_word, average_word_len = word_length(regex_text)
-	print("Longest word: ", longest_word)
-	print("Shortest word: ", shortest_word)
-	print("Average word length: ", average_word_len)
+	print("Average token length: ", average_word_len)
 		
 
 if __name__ == "__main__":
