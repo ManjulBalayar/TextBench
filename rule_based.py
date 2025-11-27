@@ -57,9 +57,8 @@ def remove_punctuations(text):
                 "*":"", "/":"", "\\":"",
                 "|":"", "<":"", ">":"",
                 "~":"", "`":"", "@":"",
-                "^":"", "“": "", "”": "", 
-		"’": "'",
-	})	
+                "^":"", "“": "", "”": "",
+		 "’": "'",})	
 	cleaned_text = text.translate(translator)
 	return cleaned_text
 
@@ -79,7 +78,13 @@ def regex_tokenizer(text):
 	the raw text.
 	"""
 	pattern = re.compile(
-    		r"[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+|[A-Za-z0-9'’]+"
+    		r"""
+			[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+  # emails
+			|\$(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?		# money like $1200 or $199.99
+			|[0-9]+:[0-9]+					# time like 5:00
+			|[A-Za-z0-9'’]+					# words in general
+		""",
+		re.VERBOSE,				
 	)
 	matches = pattern.finditer(text)
 	cleaned = [m.group().lower() for m in matches]
