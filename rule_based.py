@@ -45,6 +45,29 @@ STOP_WORDS = {
 
 STOP_WORDS_SET = set(STOP_WORDS)
 
+POSITIVE = {
+	"good", "great", "excellent", "amazing", "awesome", "positive", "fortunate",
+    	"smooth", "successful", "well", "improved", "love", "nice", "happy",
+    	"beneficial", "effective", "efficient", "fast", "quick", "stable",
+    	"resolved", "fix", "fixed", "handle", "handled", "progress",
+    	"supportive", "reliable", "success", "clean"	
+}
+POSITIVE_WORDS = set(POSITIVE)
+
+NEGATIVE = {
+	"bad", "terrible", "awful", "negative", "unfortunate",
+    	"slow", "sluggish", "fail", "failed", "failure", "error", "errors",
+    	"issue", "issues", "problem", "problems", "bug", "bugs",
+    	"timeout", "crash", "broken", "downtime", "unstable",
+    	"delay", "delayed", "incorrect", "poor", "worse", "worst",
+    	"unexpected", "critical", "urgent",
+    	"outdated", "dependency", "incident"
+}
+NEGATIVE_WORDS = set(NEGATIVE)
+
+NEGATION = {"not", "no", "never", "none", "didn't", "won't", "cannot", "can't"}
+NEGATION_WORDS = set(NEGATION)
+
 def remove_punctuations(text):
 	translator = str.maketrans({
                 "!":"", ".":"", "?":"", 
@@ -72,37 +95,42 @@ def remove_stopwords(text):
 	return tokens
 
 def regex_tokenizer(text):
-    pattern = re.compile(
-        r"""
-            https?://[^\s]+                                # URLs (http/https)
-            |[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+ # emails
-            |\$(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?         # money like $1,200 or $199.99
-            |[0-9]{1,2}:[0-9]{2}                            # time like 5:00
-            |[A-Za-z0-9'’]+                                 # words in general
-        """,
-        re.VERBOSE,
-    )
-
-    matches = pattern.finditer(text)
-    cleaned = [m.group().lower() for m in matches]
-    tokens = [token for token in cleaned if token not in STOP_WORDS_SET]
-    return tokens
-
-
+	pattern = re.compile(
+    		r"""
+        	https?://\S+                                      # URLs
+        	|[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+   # emails
+        	|\$(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?[KMBkmb]?  # money: $88.3B, $1.23, $90M
+        	|\d+(?:\.\d+)?%                                   # percentages: 3.2%, 12%
+        	|[0-9]{1,2}:[0-9]{2}                              # times: 3:00, 12:30
+        	|[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*                # words w/ internal - or '
+    		""",
+		re.VERBOSE,
+	)
+	matches = pattern.finditer(text)
+	cleaned = [m.group().lower() for m in matches]
+	tokens = [token for token in cleaned if token not in STOP_WORDS_SET]
+	return tokens
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def regex_sentiment_analysis(text):
+	"""
+	This function is responsible for understanding the sentiment of the text, ruling it out if it's a positive or a negative sentiment.
+	We will keep a count for positive and negative words. Then in the end we will do a simple subtraction to calculate the sentiment score
+	for the text. We also have negation words to handle things like "not good" ---> this should count as negative and not positive even though
+	the text consists of the word "good". Meaning we always need to keep a window to 2 to make sure that we also consider what comes before
+	these words.
+	"""
+	pos = 0
+	neg = 0
+	for i, w in enumerate(text):
+		if i > 0 and i < len(text)-1:
+			if w in POSITIVE_WORDS and text[i-1] not in NEGATION_WORDS:
+				pos += 1
+			elif w in POSITIVE_WORDS and text[i-1] in NEGATION_WORDS:
+				neg += 1
+			elif w in NEGATIVE_WORDS and text[i-1] in NEGATION_WORDS:
+				pos += 1
+			elif w in NEGATIVE_WORDS and text[i-1] not in NEGATION_WORDS:
+				neg += 1
+	sentiment_score = pos - neg
+	return sentiment_score
