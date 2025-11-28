@@ -68,6 +68,63 @@ NEGATIVE_WORDS = set(NEGATIVE)
 NEGATION = {"not", "no", "never", "none", "didn't", "won't", "cannot", "can't"}
 NEGATION_WORDS = set(NEGATION)
 
+# Rule-based topics list
+TOPIC_KEYWORDS = {
+    "finance": [
+        "billing", "invoice", "invoices", "refund", "charge", "payment", "payments",
+        "customer", "client", "budget", "cost", "price", "pricing", "salary",
+        "loan", "credit", "debit", "bank", "transaction", "financial"
+    ],
+
+    "technology": [
+        "api", "server", "service", "deployment", "deployed", "logs", "log",
+        "dependency", "module", "software", "firmware", "security", "database",
+        "system", "crash", "debug", "performance", "latency", "timeout",
+        "update", "version", "bug", "error"
+    ],
+
+    "support": [
+        "urgent", "ticket", "case", "support", "escalate", "customer", "help",
+        "issue", "request", "complaint", "respond", "response"
+    ],
+
+    "performance": [
+        "slow", "slower", "slowness", "fast", "faster", "latency", "response",
+        "timeout", "performance", "increase", "decrease", "spike", "load"
+    ],
+
+    "health": [
+        "doctor", "hospital", "medical", "medicine", "health", "exercise",
+        "diet", "treatment", "nurse", "clinic", "mental", "stress"
+    ],
+
+    "sports": [
+        "game", "team", "match", "score", "goal", "player", "league",
+        "tournament", "coach", "win", "loss"
+    ],
+
+    "education": [
+        "school", "university", "college", "student", "teacher", "course",
+        "exam", "class", "assignment", "study", "degree"
+    ],
+
+    "business": [
+        "market", "sales", "strategy", "growth", "company", "startup",
+        "profit", "loss", "revenue", "operations"
+    ],
+
+    "politics": [
+        "election", "government", "policy", "vote", "senate", "law",
+        "congress", "president", "campaign", "public"
+    ],
+
+    "entertainment": [
+        "movie", "film", "music", "show", "actor", "actress",
+        "series", "tv", "concert", "performance", "celebrity"
+    ]
+}
+
+
 def remove_punctuations(text):
 	translator = str.maketrans({
                 "!":"", ".":"", "?":"", 
@@ -112,7 +169,7 @@ def regex_tokenizer(text):
 	return tokens
 
 
-def regex_sentiment_analysis(text):
+def regex_sentiment_analysis(tokens):
 	"""
 	This function is responsible for understanding the sentiment of the text, ruling it out if it's a positive or a negative sentiment.
 	We will keep a count for positive and negative words. Then in the end we will do a simple subtraction to calculate the sentiment score
@@ -122,15 +179,33 @@ def regex_sentiment_analysis(text):
 	"""
 	pos = 0
 	neg = 0
-	for i, w in enumerate(text):
-		if i > 0 and i < len(text)-1:
-			if w in POSITIVE_WORDS and text[i-1] not in NEGATION_WORDS:
+	for i, w in enumerate(tokens):
+		if i > 0 and i < len(tokens)-1:
+			if w in POSITIVE_WORDS and tokens[i-1] not in NEGATION_WORDS:
 				pos += 1
-			elif w in POSITIVE_WORDS and text[i-1] in NEGATION_WORDS:
+			elif w in POSITIVE_WORDS and tokens[i-1] in NEGATION_WORDS:
 				neg += 1
-			elif w in NEGATIVE_WORDS and text[i-1] in NEGATION_WORDS:
+			elif w in NEGATIVE_WORDS and tokens[i-1] in NEGATION_WORDS:
 				pos += 1
-			elif w in NEGATIVE_WORDS and text[i-1] not in NEGATION_WORDS:
+			elif w in NEGATIVE_WORDS and tokens[i-1] not in NEGATION_WORDS:
 				neg += 1
 	sentiment_score = pos - neg
 	return sentiment_score
+
+def regex_topic_assigner(tokens):
+	"""
+	This function assigns topics to the text given, if it's sports related, finance, politics, etc.
+	I have a dictionary of words related to a certain sector. Logic is simple, all I need to do is
+	check if my token exists in my dictionary and under which key.
+	"""
+	topic_hits = []
+
+	for topic, keywords in TOPIC_KEYWORDS.items():
+		for token in tokens:
+			if token in keywords:
+				topic_hits.append(topic)
+	if not topic_hits:
+		return None
+	print(topic_hits)
+	return max(set(topic_hits), key=topic_hits.count)
+	

@@ -4,7 +4,7 @@ the parameters in the CLI.
 """
 
 from stats import basic_counts, top_k_words, word_length, sentence_statistics
-from rule_based import remove_stopwords, regex_tokenizer, regex_sentiment_analysis
+from rule_based import remove_stopwords, regex_tokenizer, regex_sentiment_analysis, regex_topic_assigner
 
 def main():
 	#text = """Apple (AAPL) shares fell 3.2% in pre-market trading after the company reported lower-than-expected iPhone sales for Q4. Revenue came in at $88.3B, missing analyst estimates of $90.1B, while EPS was $1.23, slightly above expectations. Management issued softer guidance for the upcoming quarter, citing weak demand in Europe and FX headwinds. Despite the sales shortfall, CEO Tim Cook emphasized “resilient services growth,” with services revenue rising 12% YoY. Analysts at Morgan Stanley said they remain “constructive” on the stock over the long term, but warned that short-term volatility is likely until macro conditions stabilize."""	
@@ -82,13 +82,18 @@ Image"""
 	
 	print("")
 
-	sentiment_score = regex_sentiment_analysis(text)
+	sentiment_score = regex_sentiment_analysis(regex_tokens)
 	if sentiment_score > 0:
 		print("This is an overall positive text with score of: ", sentiment_score)
 	elif sentiment_score < 0:
 		print("This is an overall negative text with score of: ", sentiment_score)
 	elif sentiment_score == 0:
 		print("This is a neutral text with the score of: ", sentiment_score)
+	
+	print("")
+	
+	topic = regex_topic_assigner(regex_tokens)
+	print("The topic of this text is: ", topic)	
 
 if __name__ == "__main__":
 	main()
