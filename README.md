@@ -1,6 +1,6 @@
 # TextBench
 
-What is this? Well, it's a fun little project that benchmarks and compares different NLP approaches for text analysis. I'm comparing rule-based techniques (regex tokenization), transformer models (BERT), and eventually LLMs to see how they stack up against each other for sentiment analysis, topic classification, and summarization. The goal is to understand the trade-offs between speed, accuracy, and complexity across these different methods, with visualizations to make it all clear. Ignore the `.swp` files, those are files generated from me using Vim. Yup, I'm cool like that. 
+What is this? Well, it's a fun little project that benchmarks and compares different NLP approaches for text analysis. I'm comparing rule-based techniques (regex tokenization), transformer models (BERT), and eventually LLMs to see how they stack up against each other for sentiment analysis, topic classification, and summarization. The goal is to understand the trade-offs between speed, accuracy, and complexity across these different methods, with visualizations to make it all clear. 
 
 ## `stats.py`
 
