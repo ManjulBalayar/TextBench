@@ -5,3 +5,5 @@ matplotlib
 transformers
 torch
 scikit-learn
+google-genai
+dotenv

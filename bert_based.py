@@ -68,4 +68,4 @@ def bert_predict(text):
     return class_names[pred.item()]
 
 
-
+# Test
