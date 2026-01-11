@@ -1,7 +1,9 @@
 """
 In this file, I will be utilizing BERT to generate tokens for my given input sequence + utilizing
-the model that I've trained to generate sentiment analysis classification on the text input. 
+the model that I've trained to generate sentiment analysis classification on the text input. The
+model training is under the BERT_Reviews.ipynb file. 
 """
+
 from transformers import AutoTokenizer
 from transformers import BertModel
 import torch
@@ -13,7 +15,7 @@ BERT_MODEL = "bert-base-uncased"
 def bert_tokenizer(text):
 	tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL)
 	tokens = tokenizer.tokenize(text)
-	print(tokens)
+	return tokens
 
 class BERTSentimentClassifier(nn.Module):
 	
@@ -34,34 +36,36 @@ class BERTSentimentClassifier(nn.Module):
 		output = self.out(output)
 		return output
 
-class_names = ['negative', 'neutral', 'positive']
-model = BERTSentimentClassifier(len(class_names))
-model.load_state_dict(torch.load('models/bert-reviews.bin', map_location=torch.device('cpu')))
+def bert_predict(text):
+    class_names = ['negative', 'neutral', 'positive']
+    model = BERTSentimentClassifier(len(class_names))
+    model.load_state_dict(torch.load('models/bert-reviews.bin', map_location=torch.device('cpu')))
 
-model.eval()
+    model.eval()
 
-text = "The place was very clean and the food was great! Staff was really nice as well!"
-bert_tokenizer(text)
-print()
+    bert_tokenizer(text)
+    print()
 
-tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL)
-encoded_review = tokenizer.encode_plus(
-	text,
-	max_length=128,
-	add_special_tokens=True,
-	padding='max_length',
-	truncation=True,
-	return_attention_mask=True,
-	return_token_type_ids=False,
-	return_tensors='pt'
-)
+    tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL)
+    encoded_review = tokenizer.encode_plus(
+        text,
+        max_length=128,
+        add_special_tokens=True,
+        padding='max_length',
+        truncation=True,
+        return_attention_mask=True,
+        return_token_type_ids=False,
+        return_tensors='pt'
+    )
 
-input_ids = encoded_review['input_ids']
-attention_mask = encoded_review['attention_mask']
+    input_ids = encoded_review['input_ids']
+    attention_mask = encoded_review['attention_mask']
 
-with torch.inference_mode():
-	output = model(input_ids, attention_mask)
-	_, pred = torch.max(output, dim=1)
+    with torch.inference_mode():
+        output = model(input_ids, attention_mask)
+        _, pred = torch.max(output, dim=1)
+    
+    return class_names[pred.item()]
 
-print(f'Text: {text}')
-print(f'Sentiment: {class_names[pred.item()]}')
+
+
