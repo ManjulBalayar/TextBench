@@ -7,3 +7,6 @@ __pycache__/
 # Model artifacts
 models/
 *.bin
+
+# Virtual Environment
+venv/
