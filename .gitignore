@@ -1,1 +1,9 @@
+# macOS
+.DS_Store
+
+# Python
 __pycache__/
+
+# Model artifacts
+models/
+*.bin
