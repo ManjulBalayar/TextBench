@@ -3,9 +3,9 @@ This file is my main and is responsible to importing all my functions and also h
 the parameters in the CLI.
 """
 
-from stats import basic_counts, top_k_words, word_length, sentence_statistics
-from rule_based import remove_stopwords, regex_tokenizer, regex_sentiment_analysis, regex_topic_assigner
-from bert_based import bert_tokenizer, bert_predict
+from src.utils.stats import basic_counts, top_k_words, word_length, sentence_statistics
+from src.rule_based import remove_stopwords, regex_tokenizer, regex_sentiment_analysis, regex_topic_assigner
+from src.bert_based import bert_tokenizer, bert_predict
 
 def main():
 #    text = """I like that this has just simple ingredients for barrier repair and gentle preservatives. I do medical microneedling and was looking for something simple to use the following day that would help my skin heal. I normally just use shea butter and hyaluronic acid and zinc sunscreen. Unfortunately, this product did not work for the day after needling. It made my skin sting so I rinsed it off. But after a few days I started using this topped with a dab of shea butter and wow my skin has never been so hydrated and smooth. I normally have a dehydration line and flakimess, but both of those issues were almost gone after a couple weeks. With it being so cheap, it's worth a try if you have barrier/dehydration issues. I think the combo of ceramides and fatty acids and the lack of actives makes a difference. I am prone to clogged pores but this did not make them worse. Sometimes the old tried and true skincare formulations just work better.
