@@ -8,7 +8,7 @@ This file I focused more on rule-based techniques, primarily working with Python
 
 ## `BERT_Reviews.ipynb` & `bert_based.py`
 
-The `BERT_Reviews.ipynb` is where I perform the data preprocessing, create the PyTorch dataset & load it into the BERT model, and lastly train & test the sentiment classifer model using the pooled outputs from BERT. The model achieved an accuracy score of ~71% & the prediction time took around 4.5 minutes. But training had early stoppage around 5 epochs since BERT (that has a lot of params) can usually learn most relevant things by 2-5 epochs. By applying early stoppage once my macro-F1 plateaus, I can avoid overfitting. `bert_based.py` is just me loading the trained model to test raw text of our own.
+The `notebooks/BERT_Reviews.ipynb` is where I perform the data preprocessing, create the PyTorch dataset & load it into the BERT model, and lastly train & test the sentiment classifer model using the pooled outputs from BERT. The model achieved an accuracy score of ~71% & the prediction time took around 4.5 minutes. But training had early stoppage around 5 epochs since BERT (that has a lot of params) can usually learn most relevant things by 2-5 epochs. By applying early stoppage once my macro-F1 plateaus, I can avoid overfitting. `src/bert_based.py` is just me loading the trained model to test raw text of our own.
 
 ## `LLM_Rule_Based_Reviews.ipynb` & `llm_based.py`
 
