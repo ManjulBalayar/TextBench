@@ -4,6 +4,7 @@ the model that I've trained to generate sentiment analysis classification on the
 model training is under the BERT_Reviews.ipynb file. 
 """
 
+import os
 from transformers import AutoTokenizer
 from transformers import BertModel
 import torch
@@ -39,7 +40,13 @@ class BERTSentimentClassifier(nn.Module):
 def bert_predict(text):
     class_names = ['negative', 'neutral', 'positive']
     model = BERTSentimentClassifier(len(class_names))
-    model.load_state_dict(torch.load('models/bert-reviews.bin', map_location=torch.device('cpu')))
+    
+    # Get the absolute path to the model file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    model_path = os.path.join(project_root, 'models', 'bert-reviews.bin')
+    
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
     model.eval()
 

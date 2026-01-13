@@ -6,13 +6,10 @@ from google import genai
 from google.genai import types
 import json
 import re
-import ast
 
 load_dotenv()
 
 client = genai.Client()
-
-input_text = "This is a great product. Would highly recommend! Size fits perfectly and came right on time"
 
 def llm_tokenizer(input_text):
     prompt_instruction = """
@@ -24,22 +21,34 @@ def llm_tokenizer(input_text):
     Now tokenize this text:
     """
     
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        config=types.GenerateContentConfig(
-            system_instruction=prompt_instruction
-        ),
-        contents=input_text
-    )
-    
-    result_text = response.text.strip()
-    
-    # Remove markdown if present
-    if result_text.startswith('```'):
-        result_text = re.sub(r'```(?:json)?\s*|\s*```', '', result_text).strip()
-    
-    result = json.loads(result_text)
-    return result["tokens"]
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=prompt_instruction
+            ),
+            contents=input_text
+        )
+        
+        result_text = response.text.strip()
+        
+        # Remove markdown if present
+        if result_text.startswith('```'):
+            result_text = re.sub(r'```(?:json)?\s*|\s*```', '', result_text).strip()
+        
+        result = json.loads(result_text)
+        return result["tokens"]
+    except Exception as e:
+        # Return error info that can be displayed in the UI
+        error_msg = str(e)
+        if "429" in error_msg or "rate limit" in error_msg.lower():
+            return {"error": "Rate limit exceeded. Please try again later."}
+        elif "quota" in error_msg.lower():
+            return {"error": "API quota exceeded. Please check your Gemini API usage."}
+        elif "auth" in error_msg.lower() or "api key" in error_msg.lower():
+            return {"error": "Authentication error. Please check your API key."}
+        else:
+            return {"error": f"LLM tokenization failed: {error_msg}"}
 
 def llm_sentiment_analysis(input_text):
     prompt_instruction = """
@@ -56,22 +65,48 @@ def llm_sentiment_analysis(input_text):
     }
     """
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        config=types.GenerateContentConfig(
-            system_instruction=prompt_instruction 
-        ),
-        contents=input_text
-    )
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=prompt_instruction 
+            ),
+            contents=input_text
+        )
 
-    result_text = response.text.strip()
-    # Extract JSON from markdown code blocks
-    json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', result_text, re.DOTALL)
-    if json_match:
-        result_text = json_match.group(1)
+        result_text = response.text.strip()
+        # Extract JSON from markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', result_text, re.DOTALL)
+        if json_match:
+            result_text = json_match.group(1)
 
-    result = json.loads(result_text)
-    return result
+        result = json.loads(result_text)
+        return result
+    except Exception as e:
+        # Return error info that can be displayed in the UI
+        error_msg = str(e)
+        if "429" in error_msg or "rate limit" in error_msg.lower():
+            return {
+                "sentiment": "error",
+                "confidence": 0,
+                "reasoning": "Rate limit exceeded. Please try again later or check your API quota."
+            }
+        elif "quota" in error_msg.lower():
+            return {
+                "sentiment": "error",
+                "confidence": 0,
+                "reasoning": "API quota exceeded. Your free trial may have ended. Please check your Gemini API usage."
+            }
+        elif "auth" in error_msg.lower() or "api key" in error_msg.lower():
+            return {
+                "sentiment": "error",
+                "confidence": 0,
+                "reasoning": "Authentication error. Please check your API key configuration."
+            }
+        else:
+            return {
+                "sentiment": "error",
+                "confidence": 0,
+                "reasoning": f"LLM analysis failed: {error_msg}"
+            }
 
-result = llm_tokenizer(input_text)
-print(result)
