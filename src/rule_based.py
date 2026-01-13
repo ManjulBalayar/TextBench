@@ -170,27 +170,43 @@ def regex_tokenizer(text):
 
 
 def regex_sentiment_analysis(tokens):
-	"""
-	This function is responsible for understanding the sentiment of the text, ruling it out if it's a positive or a negative sentiment.
-	We will keep a count for positive and negative words. Then in the end we will do a simple subtraction to calculate the sentiment score
-	for the text. We also have negation words to handle things like "not good" ---> this should count as negative and not positive even though
-	the text consists of the word "good". Meaning we always need to keep a window to 2 to make sure that we also consider what comes before
-	these words.
-	"""
-	pos = 0
-	neg = 0
-	for i, w in enumerate(tokens):
-		if i > 0 and i < len(tokens)-1:
-			if w in POSITIVE_WORDS and tokens[i-1] not in NEGATION_WORDS:
-				pos += 1
-			elif w in POSITIVE_WORDS and tokens[i-1] in NEGATION_WORDS:
-				neg += 1
-			elif w in NEGATIVE_WORDS and tokens[i-1] in NEGATION_WORDS:
-				pos += 1
-			elif w in NEGATIVE_WORDS and tokens[i-1] not in NEGATION_WORDS:
-				neg += 1
-	sentiment_score = pos - neg
-	return sentiment_score
+    """
+    This function is responsible for understanding the sentiment of the text, ruling it out if it's a positive or a negative sentiment.
+    We will keep a count for positive and negative words. Then in the end we will do a simple subtraction to calculate the sentiment score
+    for the text. We also have negation words to handle things like "not good" ---> this should count as negative and not positive even though
+    the text consists of the word "good". Meaning we always need to keep a window to 2 to make sure that we also consider what comes before
+    these words.
+    """
+    pos = 0
+    neg = 0
+    for i, w in enumerate(tokens):
+        has_negation = (i > 0 and tokens[i-1] in NEGATION_WORDS)
+        if w in POSITIVE_WORDS:
+            if not has_negation:
+                pos += 1
+            else:
+                neg += 1
+        elif w in NEGATIVE_WORDS:
+            if not has_negation:
+                neg += 1
+            else:
+                pos += 1
+    sentiment_score = pos - neg
+
+    if sentiment_score > 0:
+        sentiment = "positive"
+    elif sentiment_score < 0:
+        sentiment = "negative"
+    else:
+        sentiment = "neutral"
+
+    # Confidence calculation using normalized confidence, |pos - neg| / (pos + neg)
+    return {
+        'prediction': sentiment,
+        'confidence': 0 if (pos + neg) == 0 else round(abs(pos - neg) / (pos + neg), 2),
+        'num_of_pos_words': pos,
+        'num_of_neg_words': neg,
+    }
 
 def regex_topic_assigner(tokens):
 	"""

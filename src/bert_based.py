@@ -62,10 +62,18 @@ def bert_predict(text):
     attention_mask = encoded_review['attention_mask']
 
     with torch.inference_mode():
-        output = model(input_ids, attention_mask)
-        _, pred = torch.max(output, dim=1)
+        logits = model(input_ids, attention_mask)
+        probabilities = torch.softmax(logits, dim=1)
+        confidence, pred = torch.max(probabilities, dim=1)
     
-    return class_names[pred.item()]
+    return {
+        'prediction': class_names[pred.item()],
+        'confidence': round(confidence.item() * 100, 2),
+        'all_scores': {
+            class_names[i]: round(probabilities[0][i].item() * 100, 2)
+            for i in range(len(class_names))
+        }
+    }
 
 
 # Test
