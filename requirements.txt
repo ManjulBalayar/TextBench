@@ -1,5 +1,5 @@
 pandas
-numpy
+numpy<2.0
 seaborn
 matplotlib
 transformers
@@ -7,3 +7,5 @@ torch
 scikit-learn
 google-genai
 dotenv
+streamlit
+watchdog

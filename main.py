@@ -75,13 +75,8 @@ If you have sensitive or acne-prone skin, I highly recommend this. I’m genuine
 
     print("")
 
-    sentiment_score = regex_sentiment_analysis(regex_tokens)
-    if sentiment_score > 0:
-        print("This is an overall positive text with score of: ", sentiment_score)
-    elif sentiment_score < 0:
-        print("This is an overall negative text with score of: ", sentiment_score)
-    elif sentiment_score == 0:
-        print("This is a neutral text with the score of: ", sentiment_score)
+    sentiment_results = regex_sentiment_analysis(regex_tokens)
+    print(sentiment_results)
 
     print("")
 
