@@ -31,38 +31,61 @@ st.divider()
 st.subheader("Demo your review (for a product, service, etc.) here:")
 user_input = st.text_area("Enter your review", label_visibility="collapsed")
 
+# Initialize session state for rate limiting
+if 'llm_calls' not in st.session_state:
+    st.session_state.llm_calls = 0
+
 if st.button("Analyze"):
     if user_input:
         st.divider()
         
         # LLM-Based Analysis
         st.subheader("1. LLM-Based Analysis")
-        start_time = time.time()
-        llm_tokens = llm_tokenizer(user_input)
         
-        # Check if tokenizer returned an error
-        if isinstance(llm_tokens, dict) and 'error' in llm_tokens:
-            st.error(f"**Tokenization Error:** {llm_tokens['error']}")
-            llm_tokens = ["N/A"]
-        
-        st.write("**Tokens:**", llm_tokens)
-        
-        llm_result = llm_sentiment_analysis(user_input)
-        llm_latency = time.time() - start_time
-        
-        # Check if sentiment analysis encountered an error
-        if llm_result.get('sentiment') == 'error':
-            st.error(f"**Analysis Error:** {llm_result['reasoning']}")
+        # Check rate limit BEFORE attempting call
+        if st.session_state.llm_calls >= 10:
+            st.warning("LLM demo limit reached (10 per session). Refresh the page to reset, or see BERT results below!")
+            st.info("This limit helps manage API costs. BERT analysis is always available and faster!")
         else:
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Sentiment", llm_result['sentiment'].upper())
-            with col2:
-                st.metric("Confidence", f"{llm_result['confidence']}")
-            with col3:
-                st.metric("Latency", f"{llm_latency:.3f}s")
-            if 'reasoning' in llm_result:
-                st.write("**Reasoning:**", llm_result['reasoning'])
+            # Increment counter immediately to track the attempt
+            st.session_state.llm_calls += 1
+            remaining = 10 - st.session_state.llm_calls
+            
+            start_time = time.time()
+            llm_tokens = llm_tokenizer(user_input)
+            
+            # Check if tokenizer returned an error
+            if isinstance(llm_tokens, dict) and 'error' in llm_tokens:
+                st.error(f"**Tokenization Error:** {llm_tokens['error']}")
+                llm_tokens = ["N/A"]
+            else:
+                st.write("**Tokens:**", llm_tokens)
+            
+            llm_result = llm_sentiment_analysis(user_input)
+            llm_latency = time.time() - start_time
+            
+            # Check if sentiment analysis encountered an error
+            if llm_result.get('sentiment') == 'error':
+                st.error(f"**Analysis Error:** {llm_result['reasoning']}")
+            else:
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Sentiment", llm_result['sentiment'].upper())
+                with col2:
+                    st.metric("Confidence", f"{llm_result['confidence']}")
+                with col3:
+                    st.metric("Latency", f"{llm_latency:.3f}s")
+                if 'reasoning' in llm_result:
+                    st.write("**Reasoning:**", llm_result['reasoning'])
+            
+            # Show remaining calls with visible styling
+            if remaining > 0:
+                if remaining <= 3:
+                    st.warning(f"LLM calls remaining this session: {remaining}")
+                else:
+                    st.info(f"LLM calls remaining this session: {remaining}")
+            else:
+                st.error("This was your last LLM call. Refresh the page to reset.")
         
         st.divider()
         

@@ -1,11 +1,21 @@
 """
 This file I will use an LLM model to also do tokenization + sentiment analysis.
 """
+import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import json
 import re
+
+# Try to load API key from Streamlit secrets first (for deployment)
+# Fall back to .env for local development
+try:
+    import streamlit as st
+    if hasattr(st, 'secrets') and 'GOOGLE_API_KEY' in st.secrets:
+        os.environ['GOOGLE_API_KEY'] = st.secrets['GOOGLE_API_KEY']
+except ImportError:
+    pass  # Streamlit not available, will use .env
 
 load_dotenv()
 

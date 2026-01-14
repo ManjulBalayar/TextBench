@@ -4,10 +4,6 @@
 # Python
 __pycache__/
 
-# Model artifacts
-models/
-*.bin
-
 # Virtual Environment
 venv/
 .env

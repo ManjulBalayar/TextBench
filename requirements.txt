@@ -6,7 +6,7 @@ transformers
 torch
 scikit-learn
 google-genai
-dotenv
+python-dotenv
 streamlit
 watchdog
 plotly
