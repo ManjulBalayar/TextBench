@@ -108,6 +108,9 @@ I also tried doing some rule-based stats in my `stats.py` for fun & from scratch
 # Interactive Stats Demo
 st.subheader("Try the Stats Functions!")
 st.write("Enter text below to see rule-based text statistics in action:")
+st.write("""Example text: I am so impressed with the Vanicream Daily Facial Moisturizer. My skin is very sensitive, and this is one of the only products that keeps it calm, hydrated, and irritation-free. It has a smooth, lightweight texture that absorbs quickly without leaving my face greasy or sticky.
+I also love that it’s fragrance-free and packed with hyaluronic acid and ceramides which makes my skin feels soft, balanced, and moisturized all day long. After using it consistently, I can definitely see a difference in how healthy and even my skin looks.
+If you have sensitive or acne prone skin, I highly recommend this. I’m genuinely satisfied with my results and will absolutely repurchase!""")
 
 user_stats_input = st.text_area(
     "Enter your text for analysis",
@@ -168,7 +171,209 @@ st.divider()
 
 # BERT Section
 st.header("2. Bidirectional Encoder Representations from Transformers (BERT)")
-st.info("Still writing...")
+
+st.subheader("Overview")
+st.write("""
+BERT was a popular encoder-only model released by Google in 2018. It was a revolutionary language model that 
+could process text **bidirectionally**—meaning it could understand context from both directions simultaneously. 
+Unlike the original Transformers architecture, BERT doesn't have a decoder component and therefore cannot generate text. 
+Hence, why it's called an **encoder-only model**, as the architecture of BERT is essentially a bunch of encoders stacked up.
+
+There are also two BERT model sizes:
+- **BERT base**: 12 transformer encoder layers
+- **BERT large**: 24 transformer encoder layers
+
+For this project, I utilized **BERT base** as my dataset is fairly small.
+""")
+
+st.subheader("BERT's Task #1: Masked Language Modeling (MLM)")
+st.write("""
+BERT typically produces two main types of outputs: `last_hidden_state` (sequence out) and `pooler_output` 
+(pooled representation for the whole sequence).
+
+The `last_hidden_state` gets us the last encoder's values. Each token is a **768-dimensional vector**, and each token 
+knows about all the other tokens in the input. This last output is the deep semantic representation of your input sequence. 
+This is also BERT's task #1, which is **Masked Language Modeling (MLM)** — you randomly mask words and predict them.
+""")
+
+st.subheader("BERT's Task #2: Next Sentence Prediction (NSP)")
+st.write("""
+The other main output of BERT was `pooler_output`, which takes the **[CLS] token embedding** from the `last_hidden_state` 
+and passes it through a linear layer and tanh activation. It represents the whole input sequence, designed specifically 
+for classification tasks—exactly the use case for sentiment analysis classification.
+
+This exists because BERT uses [CLS] for **Next Sentence Prediction (NSP)**, which was the second task of BERT: 
+does sentence B actually follow sentence A in the original text?
+""")
+
+st.subheader("Sentiment Classification Using BERT")
+st.write("""
+The task is to train BERT to read reviews and make it classify the sentiment: **positive, negative, or neutral**.
+
+We first start off by selecting a sequence length. We analyze the token length distribution for most of our reviews. 
+For BERT, the maximum length is 512 tokens, but we don't need to use all 512 as our sequence length. Most reviews 
+were length 0-100, therefore, I set the sequence length at **128 tokens**.
+
+**Why shorter sequence length?**
+- ✓ Improves computational efficiency by reducing GPU memory usage
+- ✓ Faster training time
+- ✓ Ideal for sentiment analysis where context beyond a few hundred tokens may not be too relevant
+""")
+
+# Try to display the sequence length chart
+try:
+    st.image(os.path.join(project_root, 'webapp', 'assets', 'seq_length.png'), 
+             caption="Distribution of Review Token Lengths", 
+             use_container_width=True)
+except Exception as e:
+    st.info(f"Sequence length distribution chart (webapp/assets/seq_length.png)")
+
+st.subheader("Prepare PyTorch Dataset")
+st.write("""
+For tiny datasets (<100 samples), you could tokenize everything and batch up front, but since we have thousands 
+of samples, we first need to create a **PyTorch dataset** from our original dataset. This helps us with:
+- Batching
+- Shuffling
+- Preprocessing
+- Memory efficiency
+- Multi-processing
+
+It's clean, scalable, efficient code and the best way to handle data in PyTorch.
+
+In my `PTDataset(data.Dataset)` function, we pass in:
+- **text**: List of reviews
+- **target**: List of labels (0, 1, 2 for negative, neutral, positive)
+- **tokenizer**: BERT's tokenizer
+- **max_len**: Max tokens per review (128 in our case)
+""")
+
+st.write("""
+The `encoding` is the tokenizer's output. It converts the text/review into numbers for BERT to understand/process. 
+What `encode_plus` does is:
+
+1. **Tokenizes** the words in our review
+2. **Converts them into IDs**
+3. **Adds special tokens** ([CLS] at start, [SEP] at the end)
+4. **Pads to max_length** to fill remaining spots with [PAD] tokens
+5. **Creates attention_mask** which marks which tokens to focus on: focused gets (1), ignore gets (0)
+
+The two main final returns to focus on are **input_ids** and **attention_mask**, as those are the two main 
+parameters for our output with BERT.
+""")
+
+with st.expander("📝 Example: Text Transformation Process"):
+    st.code("""
+Review: "The chicken was amazing!"
+
+1) Tokenizes: ['the', 'chicken', 'was', 'amazing', '!']
+
+2) Convert to IDs: 
+   'the' -> 6249, 'chicken' -> 4856, 'was' -> 3455, 
+   'amazing' -> 2332, '!' -> 5437
+
+3) Add special tokens: 
+   [CLS] = 101, [SEP] = 102
+
+4) Pads to max_length (128): 
+   [101, 6249, 4856, 3455, 2332, 5437, 102, 0, 0, 0, …]
+   (the 0's continue up to 128 tokens)
+
+5) Create attention_mask: 
+   [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, …]
+   (marks 1 for the first 7 real tokens)
+    """, language="python")
+
+st.subheader("Batch Size & Epochs")
+st.write("""
+Next, we select the `batch_size` and the number of `epochs`:
+
+- **Batch size**: 8
+  - From our 12K dataset: 12,000 / 8 = 1,500 batches per epoch
+  - Model updates weights 1,500 times per epoch
+
+- **Epochs**: 20 (initial setting)
+  - 20 × 1,500 = 30,000 total weight updates during training
+
+**Actual split:**
+- Training: 9,600 samples (80%)
+- Validation: 1,200 samples (10%)
+- Testing: 1,200 samples (10%)
+
+So really: 9,600 / 8 = 1,200 batches per epoch → 20 × 1,200 = **24,000 total weight updates**
+""")
+
+st.subheader("Building the Classifier")
+st.write("""
+I define my model architecture in my `SentimentClassifier(nn.Module)` class, which takes:
+- **n_classes**: Number of sentiment categories (3)
+
+**What the model contains (layers):**
+- **bert**: Our uncased base BERT model
+- **drop**: Dropout rate set to 0.30
+  - This is the probability of randomly deactivating neurons during training
+  - Prevents overfitting by not depending on specific neurons
+  - Forces model to learn more robust and redundant features that generalize better
+- **out**: Linear layer that maps 768 BERT dimensions into 3 classes
+- **softmax**: Converts scores to probabilities (not used in training but for prediction)
+
+**The forward() function:**
+- Takes in `input_ids` and `attention_mask`
+- After BERT processes our input, it returns the `pooler_output` mentioned earlier
+- Applies dropout, linear layer, and returns raw scores (logits) for each class
+- Output is a tensor of shape [batch_size, 3] with scores for [negative, neutral, positive]
+
+**Example output:** `[[0.2, -0.5, 2.1]]` → predicts **positive** (highest score)
+""")
+
+st.subheader("Training & Evaluation")
+st.write("""
+For training evaluation, I used two primary metrics: **accuracy** and **macro-F1**.
+
+- **Accuracy**: Simply how many samples the model got correct
+  - Problem: Treats all mistakes as the same and doesn't care which class is wrong
+
+- **Macro F1**: Does a better job showing how well the model does on each class
+  - Example: May perform really well at picking up `positive` class but struggle with `neutral`
+
+**Overfitting Problem:**  
+Originally, I was training to all 20 epochs (~30 minutes on an A100 GPU). While training accuracy was improving, 
+the validation score was plateauing. This is a sign of **overfitting** as the model was memorizing the training 
+set but not generalizing well with new data.
+
+**Solution: Early Stopping**  
+I applied early stopping where training stops once the macro F1 score stops improving. Once implemented, 
+our model stopped training at around **4-5 epochs**. This makes sense as a large model like BERT with millions 
+of parameters usually learns most relevant information on a small dataset (~12K) by 2-5 epochs.
+
+**Final Results:**
+- Stopped at epoch 5
+- Training accuracy: 93%
+- Validation accuracy: 72%
+- Macro F1 score: 0.71
+- Training time: ~5 minutes
+""")
+
+st.subheader("Testing Results")
+st.write("""
+When training stopped at epoch 5, we used that as our best model and loaded it to test on our test split. 
+Accuracy for the test set was about **71%**, which is reasonable considering reviews can be inherently noisy.
+
+**Example of ambiguous review:**  
+*"Food was ok, drinks were really good, but prices are fair"*  
+Even for humans, it can be difficult to confidently classify this as positive or neutral.
+
+This is reflected in our precision, recall, and F1 report, where our model struggles most with classifying 
+the **neutral class**. However, on clearer examples, BERT demonstrates strong semantic understanding of text. 
+You can test it on the home page!
+""")
+
+# Try to display the classification report
+try:
+    st.image(os.path.join(project_root, 'webapp', 'assets', 'class_report.png'), 
+             caption="BERT Classification Report", 
+             use_container_width=True)
+except Exception as e:
+    st.info(f"Classification report image (webapp/assets/class_report.png)")
 
 st.divider()
 
