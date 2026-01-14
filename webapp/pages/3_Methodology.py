@@ -379,4 +379,123 @@ st.divider()
 
 # LLM Section
 st.header("3. LLM Approach (Gemini-2.5-Flash)")
-st.info("Still writing...")
+
+st.subheader("Overview")
+st.write("""
+For the LLM approach, I did **not fine-tune** the model and the code for this is fairly simple. I utilized 
+Google's **gemini-2.5-flash** model, since it's free! But unfortunately it has a rate limit of 20 API calls 
+per day. So I used the **30-day free trial** for Google's AI Studio to test the model.
+
+To use Gemini, you first need to:
+1. Install `google-genai`
+2. Create an API key
+
+After that, you are pretty much set to start using Gemini!
+""")
+
+st.subheader("Customization Options")
+st.write("""
+There are a number of ways to customize Gemini. For example, you can activate **"Thinking"** mode which lets 
+your model reason, and you can even look line by line at its reasoning process.
+
+More info about Gemini's API documentation and how to get started:  
+[https://ai.google.dev/gemini-api/docs/quickstart](https://ai.google.dev/gemini-api/docs/quickstart)
+""")
+
+st.subheader("Testing Approach")
+st.write("""
+For the LLM approach, I didn't utilize all 12K data samples—I would've quickly hit the rate limit right away. 
+So I first decided to test with only **1% of my dataset with 120 samples**.
+
+While I knew that LLMs via API are slower than BERT, I didn't know it was **THAT much slower**.
+""")
+
+st.subheader("Speed Comparison: BERT vs LLM")
+
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("BERT Training", "~30 minutes", "9,600 samples")
+    st.write("**Per sample:** ~0.19s")
+with col2:
+    st.metric("Gemini Inference", "~5 min 34s", "120 samples")
+    st.write("**Per sample:** ~2.8s")
+
+st.write("""
+**Extrapolation for full dataset:**  
+If Gemini processed 9,600 samples at ~2.8s per sample:
+- Total time: ~33,400 seconds
+- **~556.67 minutes** or **~9.27 hours**
+
+This is roughly **18x slower** than BERT training!
+""")
+
+st.subheader("Why the Speed Difference?")
+st.write("""
+At first, I thought it was due to **LLM API latency vs BERT local** issue. But it's more about the model's 
+architecture and size rather than local vs API:
+
+**Modern LLMs:**
+- Tend to have **billions of parameters**, which means more compute per forward pass
+- Process entire conversation history with each new token
+- Attention mechanism scales **quadratically** with sequence length
+
+**BERT Advantages:**
+- Massive advantage with just **one forward pass** (entire input in one go)
+- Outputs all predictions simultaneously
+- Has much **fewer parameters** meaning faster computation
+- After initial training, inference is extremely fast
+""")
+
+st.subheader("Prompt Engineering")
+st.write("""
+For the LLM approach, I used prompt engineering to guide the model's sentiment analysis. The prompt instructs 
+the model to:
+
+1. Classify sentiment as positive, negative, or neutral
+2. Provide a confidence score (0-100)
+3. Include reasoning for the classification
+
+This zero-shot approach (no training examples) achieved **~74% accuracy** on the test set, slightly outperforming 
+BERT's 71% without any model training.
+""")
+
+with st.expander("📝 View Example Prompt"):
+    st.code("""
+Analyze the sentiment of the given text and provide:
+1. Classification: positive, negative, or neutral
+2. Confidence score: 0-100 representing your certainty
+3. Reasoning: Brief explanation for your classification
+
+Return JSON format:
+{
+    "sentiment": "positive|negative|neutral",
+    "confidence": 85,
+    "reasoning": "Contains strong positive words..."
+}
+    """, language="text")
+
+st.subheader("Final Verdict")
+st.write("""
+Overall, for this specific task, **BERT is the ideal choice**. Better prompting and better models could get you 
+better results with LLM, or when you don't have training data. But BERT has an amazing balance of:
+
+✓ **Accuracy**: 71% (very competitive)  
+✓ **Speed**: A LOT faster (18x faster than LLM)  
+✓ **Cost**: Essentially free after initial training  
+✓ **Predictability**: Consistent latency and performance
+
+**When to use LLM:**
+- You don't have training data
+- You need explanations/reasoning for predictions
+- Accuracy is more important than speed
+- You can afford API costs
+
+**When to use BERT:**
+- You have training data available
+- Speed and efficiency matter
+- You want predictable costs
+- Production deployment with high volume
+
+*Note: You could train BERT on Google Colab with free GPU, but training time will probably be in the hours 
+or days, depending on the size of your dataset. Having access to an A100 GPU significantly speeds up the process!*
+""")

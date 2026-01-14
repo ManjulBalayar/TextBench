@@ -8,7 +8,7 @@ st.divider()
 
 st.write("The dataset used in this project is from the Google Local dataset: [Google Local](https://mcauleylab.ucsd.edu/public_datasets/gdrive/googlelocal/#complete-data)")
 
-st.write("The dataset contains 12,000 reviews with a rating from 1 to 5.")
+st.write("The dataset contains ~12,000 reviews with a rating from 1 to 5 stars specifically from Iowa, USA.")
 
 st.divider()
 
